@@ -20,30 +20,25 @@ from tensorflow import set_random_seed
 import gc
 import os
 
+
 #   Data Cleaning
 from nltk.tokenize import WordPunctTokenizer
 from bs4 import BeautifulSoup
 import re
 
-#myrand=np.random.randint(1, 99999 + 1)
-myrand=73849
+myrand=np.random.randint(1, 99999 + 1)
+myrand=58584
 np.random.seed(myrand)
 set_random_seed(myrand)
 z=0
 
 EMBEDDING_SIZE=32
-WORDS_SIZE=10000
+WORDS_SIZE=1000
 INPUT_SIZE=1000
 NUM_CLASSES=2
 EPOCHS=10
 
-#mydata = pd.read_csv('C:/Users/Ameer/Documents/emotion_model/Data/data_over_under.csv')
-#mydata = shuffle(mydata)
-
-mydata =  pd.read_csv('C:/Users/Ameer/Documents/emotion_model/Data/data_over_under.csv')
-mydata1 =  pd.read_csv('C:/Users/Ameer/Documents/emotion_model/Data/data_over_under.csv')
-mydata.append(mydata1)
-mydata = shuffle(mydata)
+mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/data.csv', encoding='cp1252')
 
 mydata['text'] = mydata['text'].astype(str)
 mydata['label'] = mydata['label'].astype(np.int64)
@@ -52,7 +47,6 @@ tok = WordPunctTokenizer()
 pat1 = r'@[A-Za-z0-9]+'
 pat2 = r'https?://[A-Za-z0-9./]+'
 combined_pat = r'|'.join((pat1, pat2))
-
 def tweet_cleaner(text):
     soup = BeautifulSoup(text, 'lxml')
     souped = soup.get_text()
@@ -68,15 +62,14 @@ def tweet_cleaner(text):
     words = tok.tokenize(lower_case)
     return (" ".join(words)).strip()
 
-length = len(mydata)
 
-nums = [0,length]
+nums = [0,len(mydata)]
 print ("Cleaning and parsing the tweets...\n")
 clean_tweet_texts = []
 for i in range(nums[0],nums[1]):
     if( (i+1)%1000 == 0 ):
         print ("Tweets %d of %d has been processed" % ( i+1, nums[1] ))                                                                    
-    clean_tweet_texts.append((mydata['text'][i]))
+    clean_tweet_texts.append(tweet_cleaner(mydata['text'][i]))
 
 ## Gabungkan balik dgn data
 clean_df = pd.DataFrame(clean_tweet_texts,columns=['text'])
@@ -85,7 +78,6 @@ clean_df.head()
 
 mydata = shuffle(clean_df)
 mydata['text'] = mydata['text'].astype(str)
-
 mydata['label'] = mydata['label'].astype(np.int64)
 
 gc.collect()
@@ -127,17 +119,18 @@ y_test = to_categorical(y_test, num_classes=NUM_CLASSES)
 model = Sequential(name='Word2Seq CNN + Bi-RNN + Bi-LSTM')
 
 model.add(Embedding(input_dim =WORDS_SIZE,
-                    output_dim=300,
+                    output_dim=250,
                     input_length=INPUT_SIZE
                     ))
-model.add(Conv1D(filters=300, kernel_size=3, padding='same', activation='relu'))
-model.add(MaxPool1D(pool_size=15))
-model.add(Conv1D(filters=300, kernel_size=2, padding='same', activation='relu'))
-model.add(MaxPool1D(pool_size=10))
-model.add(Bidirectional(SimpleRNN(300)))
+model.add(Conv1D(filters=250, kernel_size=3, padding='same', activation='relu'))
+model.add(MaxPool1D(pool_size=3))
+model.add(Conv1D(filters=250, kernel_size=2, padding='same', activation='relu'))
+model.add(MaxPool1D(pool_size=3))
+model.add(Bidirectional(LSTM(250,return_sequences=True,  activation='relu')))
+model.add(Bidirectional(SimpleRNN(250)))
 model.add(Flatten())
-model.add(Dense(300, activation='relu'))
-model.add(Dense(7, activation='softmax'))
+model.add(Dense(250, activation='relu'))
+model.add(Dense(2, activation='softmax'))
 
 ## Define multiple optional optimizers
 sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
@@ -148,8 +141,8 @@ model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accur
 print("Word2Seq CNN + Bi-RNN + Bi-LSTM model built: ")
 model.summary()
 
-callbackdir= 'C:/Users/Ameer/Documents/emotion_model/ten'
-
+callbackdir= 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/ten'
+\
 tbCallback = TensorBoard(log_dir=callbackdir, 
                          histogram_freq=0, 
                          batch_size=128,
@@ -159,7 +152,7 @@ tbCallback = TensorBoard(log_dir=callbackdir,
 
 tbCallback.set_model(model)
 
-mld = 'C:/Users/Ameer/Documents/emotion_model/Models/word2seq_cnn_birnn_bilstm_new_37.hdf5'
+mld = 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/Model/word2seq_cnn_birnn_bilstm.hdf5'
 
 ## Create best model callback
 mcp = ModelCheckpoint(filepath=mld, monitor="val_acc",
@@ -168,10 +161,10 @@ mcp = ModelCheckpoint(filepath=mld, monitor="val_acc",
 print('Training the Word2Seq CNN + Bi-RNN + Bi-LSTM model')
 history = model.fit(x = x_train,
           y = y_train,
-          validation_split = 0.3,
+          validation_data = (x_test, y_test),
           epochs = EPOCHS,
           batch_size = 128,
-          verbose =1,
+          verbose =2,
           callbacks=[mcp,tbCallback])
 
 print('\nPredicting the model')
@@ -191,25 +184,6 @@ print('\nWeighted Accuracy: '+ str(accuracy_score(y_true=old_y_test, y_pred=pred
 print('Weighted precision: '+ str(precision_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
 print('Weighted recall: '+ str(recall_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
 print('Weighted f-measure: '+ str(f1_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
-
-
-## Performance measure
-print('Micro Precision: {:.2f}'.format(precision_score(y_true=old_y_test, y_pred=predicted, average='micro')))
-print('Micro Recall: {:.2f}'.format(recall_score(y_true=old_y_test, y_pred=predicted, average='micro')))
-print('Micro F1-score: {:.2f}\n'.format(f1_score(y_true=old_y_test, y_pred=predicted, average='micro')))
-
-print('Macro Precision: {:.2f}'.format(precision_score(y_true=old_y_test, y_pred=predicted, average='macro')))
-print('Macro Recall: {:.2f}'.format(recall_score(y_true=old_y_test, y_pred=predicted, average='macro')))
-print('Macro F1-score: {:.2f}\n'.format(f1_score(y_true=old_y_test, y_pred=predicted, average='macro')))
-
-print('Weighted Precision: {:.2f}'.format(precision_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
-print('Weighted Recall: {:.2f}'.format(recall_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
-print('Weighted F1-score: {:.2f}'.format(f1_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
-
-from sklearn.metrics import classification_report
-print('\nClassification Report\n')
-print(classification_report(y_true=old_y_test, y_pred=predicted, target_names=['Class 1', 'Class 2', 'Class 3','Class 4', 'Class 5', 'Class 6', 'Class 7']))
-
 
 acc = history.history['acc']
 val_acc = history.history['val_acc']
@@ -231,3 +205,11 @@ plt.title('Training and validation loss')
 plt.legend()
 
 plt.show()
+
+from sklearn.metrics import classification_report
+print('\nClassification Report\n')
+print(classification_report(y_true=old_y_test, y_pred=predicted, target_names=['Class 1', 'Class 2']))
+
+
+    
+ 
