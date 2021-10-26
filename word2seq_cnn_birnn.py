@@ -35,9 +35,10 @@ EMBEDDING_SIZE=300
 WORDS_SIZE=10000
 INPUT_SIZE=300
 NUM_CLASSES=2
-EPOCHS=10
+EPOCHS=100
 
-mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/data.csv', encoding='cp1252')
+#mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/data.csv', encoding='cp1252')
+mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/balanced_data.csv' )
 
 mydata['text'] = mydata['text'].astype(str)
 mydata['label'] = mydata['label'].astype(np.int64)
@@ -150,7 +151,7 @@ tbCallback = TensorBoard(log_dir=callbackdir,
 
 tbCallback.set_model(model)
 
-mld = 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/Model/word2seq_cnn_birnn.hdf5'
+mld = 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/Model/word2seq_cnn_birnn_balanced.hdf5'
 
 ## Create best model callback
 mcp = ModelCheckpoint(filepath=mld, monitor="val_acc",
@@ -159,7 +160,7 @@ mcp = ModelCheckpoint(filepath=mld, monitor="val_acc",
 print('Training the Word2Seq CNN + Bi-RNN model')
 history = model.fit(x = x_train,
           y = y_train,
-          validation_data = (x_test, y_test),
+          validation_split = 0.3,
           epochs = EPOCHS,
           batch_size = 128,
           verbose =1,
@@ -183,22 +184,22 @@ print('Weighted precision: '+ str(precision_score(y_true=old_y_test, y_pred=pred
 print('Weighted recall: '+ str(recall_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
 print('Weighted f-measure: '+ str(f1_score(y_true=old_y_test, y_pred=predicted, average='weighted')))
 
-acc = history.history['acc']
-val_acc = history.history['val_acc']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+acc_2 = history.history['acc']
+val_acc_2 = history.history['val_acc']
+loss_2 = history.history['loss']
+val_loss_2 = history.history['val_loss']
 
-epochs_range = range(len(acc))
+epochs_range_2 = range(len(acc_2))
 
-plt.plot(epochs_range, acc, 'bo', label='Training acc')
-plt.plot(epochs_range, val_acc, 'b', label='Validation acc')
+plt.plot(epochs_range_2, acc_2, 'bo', label='Training acc')
+plt.plot(epochs_range_2, val_acc_2, 'b', label='Validation acc')
 plt.title('Training and validation accuracy')
 plt.legend()
 
 plt.figure()
 
-plt.plot(epochs_range, loss, 'bo', label='Training loss')
-plt.plot(epochs_range, val_loss, 'b', label='Validation loss')
+plt.plot(epochs_range_2, loss_2, 'bo', label='Training loss')
+plt.plot(epochs_range_2, val_loss_2, 'b', label='Validation loss')
 plt.title('Training and validation loss')
 plt.legend()
 

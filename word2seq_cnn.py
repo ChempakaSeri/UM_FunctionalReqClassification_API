@@ -34,7 +34,7 @@ EMBEDDING_SIZE=32
 WORDS_SIZE=10000
 INPUT_SIZE=300
 NUM_CLASSES=2
-EPOCHS=10
+EPOCHS=100
 
 # To allow dynamic GPU memory allowcation for model training
 config = tf.ConfigProto()
@@ -45,12 +45,12 @@ sess = tf.Session(config=config)
 set_session(sess)
 
 #   Read Data
-mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/data.csv', encoding='cp1252')
+mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/balanced_data.csv')
 mydata = shuffle(mydata)
 
 mydata['text'] = mydata['text'].astype(str)
 mydata['label'] = mydata['label'].astype(np.int64)
-#mydata["emotion"].value_counts().head(7).plot(kind="bar")
+mydata['label'].value_counts().head(2)
 
 #   Data Cleaning
 tok = WordPunctTokenizer()
@@ -78,7 +78,7 @@ nums = [0,len(mydata)]
 print ("Cleaning and parsing the tweets...\n")
 clean_tweet_texts = []
 for i in range(nums[0],nums[1]):
-    if( (i+1)%1000 == 0 ):
+    if( (i+1)%100 == 0 ):
         print ("Tweets %d of %d has been processed" % ( i+1, nums[1] ))                                                                    
     clean_tweet_texts.append(tweet_cleaner(mydata['text'][i]))
 
@@ -163,7 +163,7 @@ tbCallback = TensorBoard(log_dir=callbackdir,
 
 tbCallback.set_model(model)
 
-mld = 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/word2seq_cnn.hdf5'
+mld = 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/word2seq_cnn_balanced.hdf5'
 
 ## Create best model callback
 mcp = ModelCheckpoint(filepath=mld, monitor="val_acc",
@@ -201,23 +201,71 @@ print(classification_report(y_true=old_y_test, y_pred=predicted, target_names=['
 
 
 
-acc = history.history['acc']
-val_acc = history.history['val_acc']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+acc_1 = history.history['acc']
+val_acc_1 = history.history['val_acc']
+loss_1 = history.history['loss']
+val_loss_1 = history.history['val_loss']
 
-epochs_range = range(len(acc))
+epochs_range_1 = range(len(acc_1))
 
-plt.plot(epochs_range, acc, 'bo', label='Training acc')
-plt.plot(epochs_range, val_acc, 'b', label='Validation acc')
+plt.plot(epochs_range_1, acc_1, 'bo', label='Training acc')
+plt.plot(epochs_range_1, val_acc_1, 'b', label='Validation acc')
 plt.title('Training and validation accuracy')
 plt.legend()
 
 plt.figure()
 
-plt.plot(epochs_range, loss, 'bo', label='Training loss')
-plt.plot(epochs_range, val_loss, 'b', label='Validation loss')
+
+
+plt.plot(epochs_range_1, loss_1, 'bo', label='Training loss')
+plt.plot(epochs_range_1, val_loss_1, 'b', label='Validation loss')
 plt.title('Training and validation loss')
 plt.legend()
 
+plt.show()
+
+
+## <----    GRAPH PLOT    ---->
+plt.plot(epochs_range_1, acc_1, 'b', label='Word2Seq CNN', color='blue')
+plt.plot(epochs_range_2, acc_2, 'b', label='Word2Seq CNN BiRNN', color='red')
+plt.plot(epochs_range_3, acc_3, 'b', label='Word2Vec CNN', color='yellow')
+plt.plot(epochs_range_4, acc_4, 'b', label='Word2Vec CNN BiRNN', color='green')
+plt.plot(epochs_range_5, acc_5, 'b', label='Word2Vec CNN BiRNN BiLSTM', color='purple')
+plt.plot(epochs_range_6, acc_6, 'b', label='Word2Vec CNN BiLSTM', color='orange')
+plt.title('Training Accuracy')
+plt.legend()
+plt.figure()
+plt.show()
+
+plt.plot(epochs_range_1, val_acc_1, 'b', label='Word2Seq CNN', color='blue')
+plt.plot(epochs_range_2, val_acc_2, 'b', label='Word2Seq CNN BiRNN', color='red')
+plt.plot(epochs_range_3, val_acc_3, 'b', label='Word2Vec CNN', color='yellow')
+plt.plot(epochs_range_4, val_acc_4, 'b', label='Word2Vec CNN BiRNN', color='green')
+plt.plot(epochs_range_5, val_acc_5, 'b', label='Word2Vec CNN BiRNN BiLSTM', color='purple')
+plt.plot(epochs_range_6, val_acc_6, 'b', label='Word2Vec CNN BiLSTM', color='orange')
+plt.title('Validation Accuracy')
+plt.legend()
+plt.figure()
+plt.show()
+
+plt.plot(epochs_range_1, loss_1, 'b', label='Word2Seq CNN', color='blue')
+plt.plot(epochs_range_2, loss_2, 'b', label='Word2Seq CNN BiRNN', color='red')
+plt.plot(epochs_range_3, loss_3, 'b', label='Word2Vec CNN', color='yellow')
+plt.plot(epochs_range_4, loss_4, 'b', label='Word2Vec CNN BiRNN', color='green')
+plt.plot(epochs_range_5, loss_5, 'b', label='Word2Vec CNN BiRNN BiLSTM', color='purple')
+plt.plot(epochs_range_6, loss_6, 'b', label='Word2Vec CNN BiLSTM', color='orange')
+plt.title('Training Loss')
+plt.legend()
+plt.figure()
+plt.show()
+
+plt.plot(epochs_range_1, val_loss_1, 'b', label='Word2Seq CNN', color='blue')
+plt.plot(epochs_range_2, val_loss_2, 'b', label='Word2Seq CNN BiRNN', color='red')
+plt.plot(epochs_range_3, val_loss_3, 'b', label='Word2Vec CNN', color='yellow')
+plt.plot(epochs_range_4, val_loss_4, 'b', label='Word2Vec CNN BiRNN', color='green')
+plt.plot(epochs_range_5, val_loss_5, 'b', label='Word2Vec CNN BiRNN BiLSTM', color='purple')
+plt.plot(epochs_range_6, val_loss_6, 'b', label='Word2Vec CNN BiLSTM', color='orange')
+plt.title('Validation Loss')
+plt.legend()
+plt.figure()
 plt.show()

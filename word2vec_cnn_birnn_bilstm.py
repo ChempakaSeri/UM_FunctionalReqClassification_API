@@ -36,9 +36,9 @@ EMBEDDING_SIZE=300
 WORDS_SIZE=10000
 INPUT_SIZE=300
 NUM_CLASSES=2
-EPOCHS=10
+EPOCHS=100
 
-mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/data.csv', encoding='cp1252')
+mydata =  pd.read_csv('C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/balanced_data.csv')
 
 mydata['text'] = mydata['text'].astype(str)
 mydata['label'] = mydata['label'].astype(np.int64)
@@ -171,7 +171,7 @@ tbCallback = TensorBoard(log_dir=callbackdir,
 
 tbCallback.set_model(model)
 
-mld = 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/Model/word2vec_cnn_birnn_bilstm.hdf5'
+mld = 'C:/Users/Ameer/Documents/UM_FunctionalReqClassification_API/Model/word2vec_cnn_birnn_bilstm_balanced.hdf5'
 
 ## Create best model callback
 mcp = ModelCheckpoint(filepath=mld, monitor="val_acc",
@@ -210,22 +210,22 @@ print('\nClassification Report\n')
 print(classification_report(y_true=old_y_test, y_pred=predicted, target_names=['Class 1', 'Class 2']))
 
 
-acc = history.history['acc']
-val_acc = history.history['val_acc']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+acc_5 = history.history['acc']
+val_acc_5 = history.history['val_acc']
+loss_5 = history.history['loss']
+val_loss_5 = history.history['val_loss']
 
-epochs_range = range(len(acc))
+epochs_range_5 = range(len(acc_5))
 
-plt.plot(epochs_range, acc, 'bo', label='Training acc')
-plt.plot(epochs_range, val_acc, 'b', label='Validation acc')
+plt.plot(epochs_range_5, acc_5, 'bo', label='Training acc')
+plt.plot(epochs_range_5, val_acc_5, 'b', label='Validation acc')
 plt.title('Training and validation accuracy')
 plt.legend()
 
 plt.figure()
 
-plt.plot(epochs_range, loss, 'bo', label='Training loss')
-plt.plot(epochs_range, val_loss, 'b', label='Validation loss')
+plt.plot(epochs_range_5, loss_5, 'bo', label='Training loss')
+plt.plot(epochs_range_5, val_loss_5, 'b', label='Validation loss')
 plt.title('Training and validation loss')
 plt.legend()
 
